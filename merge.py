@@ -1,4 +1,6 @@
-"""Merge Menlo + UDEV Gothic NF + D2Coding into one family.
+"""Merge Menlo + UDEV Gothic NF + D2Coding into the four base faces.
+
+Output goes to base/; weights.py derives the shipped family from it.
 
 Cmap conflicts resolve to the first font, so Latin, box drawing and blocks
 come from Menlo, Japanese and Nerd Font icons from UDEV Gothic NF, and
@@ -44,7 +46,7 @@ def set_names(font, style, meta):
 
 
 def main():
-    os.makedirs("out", exist_ok=True)
+    os.makedirs("base", exist_ok=True)
     for style, meta in STYLES.items():
         sources = [f"src/menlo-{style}.ttf", f"src/udev-{style}.ttf", f"src/d2-{style}.ttf"]
         merged = Merger().merge(sources)
@@ -65,7 +67,7 @@ def main():
         merged["post"].isFixedPitch = 1
         set_names(merged, style, meta)
 
-        path = f"out/{FAMILY}-{style}.ttf"
+        path = f"base/{FAMILY}-{style}.ttf"
         merged.save(path)
         cmap = TTFont(path).getBestCmap()
         print(f"{style:11s} glyphs={len(merged.getGlyphOrder()):6d} cmap={len(cmap):6d} "

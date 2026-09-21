@@ -1,13 +1,21 @@
-"""Fill the 400-700 gap in MenloCJK with Medium (500) and SemiBold (600).
+"""Build the shipped MenloCJK weight ramp from the four merged base faces.
 
-Orca renders the terminal with `-webkit-font-smoothing: antialiased`, which
-makes the same face look lighter than it does in VSCode. With intermediate
-weights in the family, Orca's Font Weight setting can compensate without
-touching the other apps, which stay on 400.
+Menlo only designs two weights, and the gap between them is narrow: stems of
+172 and 227 units. On screen a third of that is hard to see, so the ramp is
+pinned to a 27-unit step - the smallest one that reads as a real difference
+at 14px - and Menlo's own Bold lands on 600 (172 + 2*27 = 226 ~ 227). Weights
+above it are emboldened from Bold, so every step across the family is equal.
 
-Stroke widths come from Menlo's own Regular->Bold stem growth (172 -> 227
-units), interpolated per 100 weight steps.
+Emboldening unions the outline with a stroked copy of itself; stroke width
+adds itself to the stem, half per side. Advance widths never change, so the
+terminal grid is unaffected.
+
+Consequence worth knowing: 700 is no longer Menlo's drawn Bold but a heavier
+synthesis. To keep ANSI bold on the drawn one, point the app's bold-weight
+setting at 600.
 """
+import shutil
+
 from fontTools.pens.cu2quPen import Cu2QuPen
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib import TTFont
@@ -15,12 +23,22 @@ from pathops import LineCap, LineJoin, Path, PathOp, op
 
 FAMILY = "MenloCJK"
 VERSION = "1.000"
-# (new style, source style, stroke width, weight class, subfamily, italic)
+STEP = 27  # stem units per 100 weight
+
+# style -> (base face, extra stems above that base, weight, subfamily, italic)
 TARGETS = [
-    ("Medium", "Regular", 18, 500, "Medium", False),
-    ("SemiBold", "Regular", 37, 600, "SemiBold", False),
-    ("MediumItalic", "Italic", 18, 500, "Medium Italic", True),
-    ("SemiBoldItalic", "Italic", 37, 600, "SemiBold Italic", True),
+    ("Regular", "Regular", 0, 400, "Regular", False),
+    ("Medium", "Regular", 1, 500, "Medium", False),
+    ("SemiBold", "Bold", 0, 600, "SemiBold", False),
+    ("Bold", "Bold", 1, 700, "Bold", False),
+    ("ExtraBold", "Bold", 2, 800, "ExtraBold", False),
+    ("Black", "Bold", 3, 900, "Black", False),
+    ("Italic", "Italic", 0, 400, "Italic", True),
+    ("MediumItalic", "Italic", 1, 500, "Medium Italic", True),
+    ("SemiBoldItalic", "BoldItalic", 0, 600, "SemiBold Italic", True),
+    ("BoldItalic", "BoldItalic", 1, 700, "Bold Italic", True),
+    ("ExtraBoldItalic", "BoldItalic", 2, 800, "ExtraBold Italic", True),
+    ("BlackItalic", "BoldItalic", 3, 900, "Black Italic", True),
 ]
 
 
@@ -56,14 +74,14 @@ def embolden(font, width):
 
 
 def rename(font, style, subfamily, italic):
-    full = f"{FAMILY} {subfamily}"
+    full = FAMILY if subfamily in ("Regular", "Italic") else f"{FAMILY} {subfamily}"
     records = {
         0: "Locally merged font for personal use. Menlo (c) Apple, "
            "UDEV Gothic (OFL), D2Coding (OFL).",
         1: full,
         2: "Italic" if italic else "Regular",
         3: f"{FAMILY};{VERSION};{style}",
-        4: full,
+        4: f"{FAMILY} {subfamily}",
         5: f"Version {VERSION}",
         6: f"{FAMILY}-{style}",
         16: FAMILY,
@@ -76,12 +94,13 @@ def rename(font, style, subfamily, italic):
         name.setName(value, nid, 1, 0, 0)
 
 
-for style, source, width, weight, subfamily, italic in TARGETS:
-    font = TTFont(f"out/{FAMILY}-{source}.ttf")
-    failed = embolden(font, width)
+for style, base, steps, weight, subfamily, italic in TARGETS:
+    font = TTFont(f"base/{FAMILY}-{base}.ttf")
+    skipped = embolden(font, steps * STEP) if steps else []
     font["OS/2"].usWeightClass = weight
     font["OS/2"].fsSelection = 0x01 if italic else 0x40
     font["head"].macStyle = 0x02 if italic else 0
+    font["post"].isFixedPitch = 1
     rename(font, style, subfamily, italic)
     font.save(f"out/{FAMILY}-{style}.ttf")
-    print(f"{style}: stroke={width} weight={weight} skipped={len(failed)}")
+    print(f"{style:16s} base={base:10s} +{steps * STEP:<3d} weight={weight} skipped={len(skipped)}")

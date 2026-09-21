@@ -34,19 +34,31 @@ cmap 충돌은 앞 폰트가 이깁니다.
 
 ## 굵기
 
-`weights.py`는 400과 700 사이를 채웁니다. Orca는 터미널에
-`-webkit-font-smoothing: antialiased`를 걸어 같은 페이스도 VSCode보다 얇게 나오는데,
-Orca의 Font Weight만 올려 보정하고 다른 앱은 400 그대로 두기 위한 것입니다.
+Menlo는 두 웨이트만 그려져 있고 그 간격도 좁습니다 — 스템 172와 227. 화면에서
+그 1/3은 구분이 안 되므로, 14px에서 차이가 실제로 보이는 최소 단위인 **27을 한 칸**으로
+잡았습니다. 그러면 Menlo의 Bold(227)가 **600 자리에 정확히 떨어집니다**
+(172 + 2×27 = 226). 그 위는 Bold에서 파생시켜 전 구간 간격을 똑같이 맞춥니다.
 
-| 웨이트 | 스템 두께 | 용도 |
+Orca가 터미널에 `-webkit-font-smoothing: antialiased`를 걸어 같은 페이스도 VSCode보다
+얇게 나오는데, 이 램프가 있으면 Orca의 Font Weight만 올려 보정하고 다른 앱은 400을
+그대로 쓸 수 있습니다.
+
+| 웨이트 | 스템 | 출처 |
 |---|---|---|
-| 400 Regular | 172 | VSCode · iTerm2 |
-| 500 Medium | 190 | Orca 보정용 |
-| 600 SemiBold | 209 | Orca 보정용 (더 굵게) |
-| 700 Bold | 227 | 볼드 |
+| 400 Regular | 172 | Menlo Regular (원본) |
+| 500 Medium | 199 | Regular +27 |
+| 600 SemiBold | 227 | **Menlo Bold (원본)** |
+| 700 Bold | 254 | Bold +27 |
+| 800 ExtraBold | 281 | Bold +54 |
+| 900 Black | 308 | Bold +81 |
 
-스트로크 폭은 Menlo 자체의 Regular→Bold 증가폭(172 → 227)을 100 단위로 선형 보간한
-값입니다. Italic도 같은 4단계로 만듭니다.
+Italic도 같은 6단계. advance는 건드리지 않으므로 터미널 그리드는 그대로입니다.
+54,587자 중 유니온이 실패하는 1~2자는 원본 아웃라인을 유지합니다.
+
+> **주의:** 700은 더 이상 Menlo가 그린 Bold가 아니라 그보다 굵은 합성입니다. 터미널
+> ANSI 볼드는 기본적으로 700을 쓰므로 볼드가 굵어집니다. 원본 Bold를 볼드로 쓰려면
+> 앱의 볼드 웨이트 설정을 600으로 내리세요 — Orca는 `Bold Font Weight`,
+> VSCode는 `terminal.integrated.fontWeightBold`.
 
 ## 빌드
 
@@ -88,7 +100,10 @@ cp out/MenloCJK-*.ttf ~/Library/Fonts/
 
 - Font Family: `MenloCJK`
 - Font Size: 14
-- Font Weight: 400에서 시작해 얇아 보이면 500 또는 600
+- Font Weight: 400에서 시작해 얇아 보이면 500, 그래도 얇으면 600
+
+새 웨이트를 설치한 뒤에는 **Orca를 재시작해야 합니다.** Chromium이 시작 시점의 패밀리
+구성을 캐싱해서, 재시작 전에는 500이 400으로 600 이상이 700으로 떨어집니다.
 
 ### 설정 파일을 직접 고칠 때 주의
 
