@@ -80,6 +80,17 @@ cp out/MenloCJK-*.ttf ~/Library/Fonts/
 
 ## 앱 설정
 
+세 앱을 나란히 놓고 맞춘 조합입니다. 굵기까지 같아 보이는 지점이 **Orca만 한 칸 위**라는
+점이 핵심입니다.
+
+| | 폰트 | 크기 | 웨이트 | 스템 |
+|---|---|---:|---:|---:|
+| VSCode | `MenloCJK` | 14 | 기본 (400) | 172 |
+| iTerm2 | `MenloCJK-Regular` | 14 | 400 | 172 |
+| Orca | `MenloCJK` | 14 | **500** | **199** |
+
+Orca만 500인 이유는 아래 [앱별 함정](#앱별-함정)의 font-smoothing 항목입니다.
+
 **VSCode**
 
 ```jsonc
@@ -94,16 +105,28 @@ cp out/MenloCJK-*.ttf ~/Library/Fonts/
 - Font: `MenloCJK-Regular` 14
 - Use a different font for non-ASCII text: **끄기**
 - 코드포인트 범위 예외(Special Font Config): **비우기**
-- **Thin Strokes: Never** — 기본값(Always)이면 CoreText가 획을 얇게 그려 Chromium 쪽보다 가늘어 보입니다
+- **Thin Strokes: Never**
 
 **Orca** — Settings → Terminal
 
 - Font Family: `MenloCJK`
 - Font Size: 14
-- Font Weight: 400에서 시작해 얇아 보이면 500, 그래도 얇으면 600
+- Font Weight: **500**
 
-새 웨이트를 설치한 뒤에는 **Orca를 재시작해야 합니다.** Chromium이 시작 시점의 패밀리
-구성을 캐싱해서, 재시작 전에는 500이 400으로 600 이상이 700으로 떨어집니다.
+## 앱별 함정
+
+**iTerm2의 Thin Strokes** — 기본값이 Always(`3`)라 CoreText가 획을 얇게 그립니다.
+Chromium에는 대응하는 동작이 없어 iTerm2만 가늘어 보입니다. Never(`0`)로 끄세요.
+
+**Orca의 font-smoothing** — Orca는 번들 CSS의 `body`에
+`-webkit-font-smoothing: antialiased`를 겁니다(VSCode에는 없음). macOS Chromium에서
+이건 subpixel AA를 grayscale AA로 바꾸는 스위치라 **같은 페이스가 더 얇게** 그려집니다.
+플러그인 매니페스트가 CSS 주입을 지원하지 않아 정공법으로는 못 고칩니다. 대신 웨이트를
+정확히 한 칸(+27) 올려 상쇄합니다 — Orca 500(199) ≒ VSCode 400(172).
+
+**새 웨이트 설치 후 Orca 재시작** — Chromium이 시작 시점의 패밀리 구성을 캐싱합니다.
+재시작 전에는 500이 400으로, 600 이상이 700으로 떨어져서 "400과 500이 똑같고 600에서
+갑자기 굵어지는" 증상이 납니다.
 
 ### 설정 파일을 직접 고칠 때 주의
 
