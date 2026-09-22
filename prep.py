@@ -32,9 +32,13 @@ menlo = TTCollection(MENLO).fonts
 d2 = TTCollection(D2).fonts
 
 for style, (mi, usuf, di) in STYLES.items():
-    strip(menlo[mi]).save(f"src/menlo-{style}.ttf")
+    m = strip(menlo[mi])
+    assert m["head"].unitsPerEm == 2048, f"Menlo {style} is not 2048 upem"
+    m.save(f"src/menlo-{style}.ttf")
 
-    strip(TTFont(UDEV.format(usuf))).save(f"src/udev-{style}.ttf")
+    u = strip(TTFont(UDEV.format(usuf)))
+    assert u["head"].unitsPerEm == 2048, f"UDEV {style} is not 2048 upem"
+    u.save(f"src/udev-{style}.ttf")
 
     f = strip(d2[di])
     scale_upem(f, 2048)

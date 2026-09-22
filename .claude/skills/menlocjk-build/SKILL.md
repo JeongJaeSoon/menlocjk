@@ -69,6 +69,29 @@ Expected: stems 172 / 199 / 227 / 254 / 281 / 308, advances always A=1233 and
 가=2048, and `fsSel=0x0020` on Bold only (0x0040 elsewhere). That bold bit is
 what iTerm2 uses for style linking — `usWeightClass` alone is not enough there.
 
+Also check that composites did not get emboldened twice. In the roman faces
+`Aacute` must be exactly as wide as `A`, at every weight:
+
+```sh
+uv run --with fonttools python - <<'EOF'
+from fontTools.ttLib import TTFont
+from fontTools.pens.boundsPen import BoundsPen
+def width(font, cp):
+    gs, c = font.getGlyphSet(), font.getBestCmap()
+    p = BoundsPen(gs); gs[c[cp]].draw(p); return p.bounds[2] - p.bounds[0]
+for s in ("Regular","Medium","SemiBold","Bold","ExtraBold","Black"):
+    f = TTFont(f"out/MenloCJK-{s}.ttf")
+    print(s, round(width(f, 0xC1) - width(f, 0x41), 1))
+EOF
+```
+
+Every line must print `0.0`. A non-zero value means `embolden()` stroked a
+composite whose component had already been replaced by its thickened self —
+`weights.py` snapshots all outlines before mutating `glyf` to prevent exactly
+that. The italic faces show a constant non-zero offset instead, because the
+slanted accent genuinely widens the bounding box; constant within a base is
+fine, growing with weight is not.
+
 400 and 600 are Menlo's own two drawn weights; everything else is emboldened
 with skia-pathops. Menlo's Bold lands on 600 rather than 700 because
 172 + 2×27 = 226 ≈ 227, which is what makes the whole ramp even.

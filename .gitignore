@@ -1,3 +1,9 @@
 base/
 src/
 out/
+
+# Menlo outlines are Apple's; no font binary may ever land in this repo.
+*.ttf
+*.ttc
+*.otf
+__pycache__/
