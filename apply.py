@@ -127,11 +127,25 @@ def apply_vscode(check):
 
 
 def iterm_python():
-    """iTerm2 ships the `iterm2` module inside its own venv."""
+    """iTerm2 ships the `iterm2` module inside its own venv.
+
+    It keeps several of them side by side (iterm2env, iterm2env-3.14, ...),
+    each holding several Python versions, so pick the newest by parsed version
+    rather than by string order - "3.8.19" sorts above "3.14.0" as text.
+    """
     if "iterm2" in sys.modules or _importable("iterm2"):
         return sys.executable
-    found = sorted(glob(str(HOME / "Library/Application Support/iTerm2/iterm2env*/versions/*/bin/python3")))
-    return found[-1] if found else None
+    found = glob(str(HOME / "Library/Application Support/iTerm2/iterm2env*/versions/*/bin/python3"))
+    for path in sorted(found, key=_version_key, reverse=True):
+        probe = subprocess.run([path, "-c", "import iterm2"], capture_output=True)
+        if probe.returncode == 0:
+            return path
+    return None
+
+
+def _version_key(path):
+    parts = Path(path).parent.parent.name.split(".")
+    return tuple(int(p) if p.isdigit() else -1 for p in parts)
 
 
 def _importable(module):

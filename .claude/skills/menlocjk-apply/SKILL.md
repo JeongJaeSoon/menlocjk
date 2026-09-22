@@ -40,6 +40,12 @@ If fonts report missing or incomplete, stop and run `menlocjk-build` first.
 
 Orca is deliberately one step heavier. Do not "correct" it to 400.
 
+Bold is 700 everywhere. Menlo's own drawn Bold sits at 600, and the README
+explains how to point an app's bold weight there instead — but iTerm2 has no
+bold-weight setting at all (CoreText picks the face by the `fsSelection` bold
+bit, which only 700 carries), so 600 cannot be matched across all three. Change
+`ORCA_SETTINGS` in `apply.py` if you want it, or this script puts 700 back.
+
 ## Why each app is written differently
 
 **VSCode** — `settings.json` is JSONC, so reserialising it would strip the

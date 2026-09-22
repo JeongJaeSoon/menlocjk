@@ -56,9 +56,15 @@ Italic도 같은 6단계. advance는 건드리지 않으므로 터미널 그리�
 54,587자 중 유니온이 실패하는 1~2자는 원본 아웃라인을 유지합니다.
 
 > **주의:** 700은 더 이상 Menlo가 그린 Bold가 아니라 그보다 굵은 합성입니다. 터미널
-> ANSI 볼드는 기본적으로 700을 쓰므로 볼드가 굵어집니다. 원본 Bold를 볼드로 쓰려면
-> 앱의 볼드 웨이트 설정을 600으로 내리세요 — Orca는 `Bold Font Weight`,
-> VSCode는 `terminal.integrated.fontWeightBold`.
+> ANSI 볼드는 기본적으로 700을 쓰므로 볼드가 굵어집니다.
+>
+> 기본값은 700입니다 — `apply.py`의 `ORCA_SETTINGS`가 그렇게 넣습니다. Menlo가 그린
+> Bold를 볼드로 쓰고 싶으면 앱의 볼드 웨이트를 600으로 내리세요. Orca는
+> `Bold Font Weight`, VSCode는 `terminal.integrated.fontWeightBold`입니다. 다만
+> **iTerm2에는 볼드 웨이트 설정이 없습니다** — CoreText가 `fsSelection`의 bold 비트로
+> 페이스를 고르고, 그 비트는 700에만 있습니다. 세 앱을 같게 맞추는 게 목적이라면 700에
+> 두는 편이 맞고, 600으로 내리려면 `apply.py`의 `ORCA_SETTINGS`도 같이 고쳐야 합니다
+> (안 그러면 다음 실행 때 조용히 700으로 돌아갑니다).
 
 ## 빌드
 
@@ -77,7 +83,11 @@ cp out/MenloCJK-*.ttf ~/Library/Fonts/
 python3 apply.py            # 세 앱 설정까지 한 번에, --check 로 미리보기
 ```
 
-`prep.py` 상단의 경로 상수와 `weights.py`의 `TARGETS`로 소스 위치·굵기를 조정합니다.
+`prep.py` 상단의 `UDEV`, `D2` 상수는 **파일명까지 하드코딩**돼 있습니다
+(`UDEVGothicNF-{Regular,Bold,Italic,BoldItalic}.ttf`,
+`D2Coding-Ver1.3.3-20260725.ttc`). 다른 릴리스를 받았다면 내려받은 파일 이름을
+바꾸지 말고 이 상수를 고치세요 — 안 맞으면 prep 단계에서 `FileNotFoundError`로 죽습니다.
+굵기는 `weights.py`의 `TARGETS`로 조정합니다.
 
 ### apply.py
 
@@ -110,11 +120,11 @@ $ python3 apply.py --check
 세 앱을 나란히 놓고 맞춘 조합입니다. 굵기까지 같아 보이는 지점이 **Orca만 한 칸 위**라는
 점이 핵심입니다.
 
-| | 폰트 | 크기 | 웨이트 | 스템 |
-|---|---|---:|---:|---:|
-| VSCode | `MenloCJK` | 14 | 기본 (400) | 172 |
-| iTerm2 | `MenloCJK-Regular` | 14 | 400 | 172 |
-| Orca | `MenloCJK` | 14 | **500** | **199** |
+| | 폰트 | 크기 | 웨이트 | 스템 | 볼드 |
+|---|---|---:|---:|---:|---|
+| VSCode | `MenloCJK` | 14 | 기본 (400) | 172 | 기본 (700) |
+| iTerm2 | `MenloCJK-Regular` | 14 | 400 | 172 | 설정 없음 — bold 비트로 700 |
+| Orca | `MenloCJK` | 14 | **500** | **199** | 700 |
 
 Orca만 500인 이유는 아래 [앱별 함정](#앱별-함정)의 font-smoothing 항목입니다.
 
@@ -133,6 +143,8 @@ Orca만 500인 이유는 아래 [앱별 함정](#앱별-함정)의 font-smoothin
 - Use a different font for non-ASCII text: **끄기**
 - 코드포인트 범위 예외(Special Font Config): **비우기**
 - **Thin Strokes: Never**
+- Use bold font: **켜기** — 꺼져 있으면 ANSI 볼드가 안 나옵니다
+- Use italic font: **켜기**
 
 **Orca** — Settings → Terminal
 
