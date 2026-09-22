@@ -83,9 +83,16 @@ and any remaining difference is weight or rasterisation — work down this list:
    `terminal.integrated.fontFamily` in VSCode; both must be exactly `MenloCJK`.
 5. **Bold looks smeared in iTerm2 only** — the 700 faces lost their
    `fsSelection` BOLD / `macStyle` bits. Rebuild with `menlocjk-build`.
+6. **iTerm2 was right and is wrong again on another machine** — a dotfiles
+   manager is tracking `~/.config/iterm2/com.googlecode.iterm2.plist` and its
+   copy still holds the old fonts. `apply.py iterm2` warns when it sees this;
+   fix it with `chezmoi re-add <path>`, not by editing the app again.
 
 ## Changing the setup
 
 Edit the constants at the top of `apply.py` (`FAMILY`, `SIZE`,
 `VSCODE_SETTINGS`, `ITERM_PROFILE`, `ORCA_SETTINGS`), rerun it, and commit. That
 keeps every machine in agreement.
+
+If a dotfiles manager tracks any of the three config files, re-add it after the
+run so the tracked copy does not revert the change on the next machine.

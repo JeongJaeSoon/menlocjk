@@ -14,7 +14,7 @@ Consequence worth knowing: 700 is no longer Menlo's drawn Bold but a heavier
 synthesis. To keep ANSI bold on the drawn one, point the app's bold-weight
 setting at 600.
 """
-import shutil
+import os
 
 from fontTools.pens.cu2quPen import Cu2QuPen
 from fontTools.pens.ttGlyphPen import TTGlyphPen
@@ -51,12 +51,21 @@ def embolden(font, width):
     glyf, hmtx = font["glyf"], font["hmtx"]
     glyphset = font.getGlyphSet()
     failures = []
+
+    # Snapshot every outline before mutating glyf. A composite glyph is
+    # drawn through glyphset, which resolves its components live off glyf -
+    # if a component's own glyf entry were already replaced by its
+    # emboldened self earlier in this loop, the composite would draw that
+    # already-thickened shape and stroke it a second time.
+    originals = {}
     for name in font.getGlyphOrder():
         if glyf[name].numberOfContours == 0:
             continue
         src = Path()
         glyphset[name].draw(src.getPen(glyphSet=glyphset))
+        originals[name] = src
 
+    for name, src in originals.items():
         thick = Path()
         src.draw(thick.getPen())
         thick.stroke(width, LineCap.ROUND_CAP, LineJoin.ROUND_JOIN, 4.0)
@@ -99,6 +108,7 @@ def rename(font, style, subfamily, italic):
         name.setName(value, nid, 1, 0, 0)
 
 
+os.makedirs("out", exist_ok=True)
 for style, base, steps, weight, subfamily, italic in TARGETS:
     font = TTFont(f"base/{FAMILY}-{base}.ttf")
     skipped = embolden(font, steps * STEP) if steps else []

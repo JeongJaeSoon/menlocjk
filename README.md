@@ -93,6 +93,7 @@ python3 apply.py --check         # 변경 없이 현재 상태만
 
 - VSCode — `settings.json`이 JSONC라 다시 직렬화하지 않고 해당 키만 제자리에서 고칩니다. 없으면 끝에 추가하고, 고치기 전에 타임스탬프 백업을 남깁니다.
 - iTerm2 — 실행 중인 앱을 Python API로 조종합니다. 꺼져 있으면 건너뛰고 안내만 합니다(디스크의 prefs를 고쳐봤자 종료할 때 덮어쓰므로).
+  prefs 파일을 chezmoi 같은 dotfiles 관리자가 추적하고 있고 그 사본이 다르면 경고합니다 — 그대로 두면 다음 `chezmoi apply`가 폰트 설정을 되돌립니다.
 - Orca — 꺼져 있을 때만 `orca-data.json`을 고칩니다. 켜져 있으면 몇 초 만에 되돌아가므로 거부하고 안내합니다.
 
 ```
@@ -164,6 +165,11 @@ Chromium에는 대응하는 동작이 없어 iTerm2만 가늘어 보입니다. N
   공개 API에 없는 키는 `_simple_get` / `_async_simple_set`으로 직접 다룹니다.
 - Orca: 프로필 데이터 파일을 실행 중에 고치면 몇 초 만에 덮어씁니다. UI에서 설정하거나
   앱을 종료한 뒤 고칩니다.
+
+**dotfiles 관리자와 겹칠 때** — iTerm2의 custom prefs folder를 chezmoi 등으로 추적하고
+있으면 정본이 둘이 됩니다. `apply.py`가 앱에 쓴 값과 추적본이 어긋난 채로 다른 PC에서
+`chezmoi apply`를 돌리면 폰트 설정이 통째로 되돌아갑니다. `apply.py iterm2`가 이 상태를
+감지해 경고하니, 나오면 `chezmoi re-add`로 추적본을 맞추세요.
 
 ## Claude Code 스킬
 

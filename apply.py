@@ -50,6 +50,7 @@ ORCA_SETTINGS = {
 HOME = Path.home()
 VSCODE_JSON = HOME / "Library/Application Support/Code/User/settings.json"
 ORCA_PROFILES = HOME / "Library/Application Support/orca/profiles"
+ITERM_PREFS = HOME / ".config/iterm2/com.googlecode.iterm2.plist"
 FONT_DIR = HOME / "Library/Fonts"
 
 OK, WARN, FAIL = "  ok", "warn", "fail"
@@ -90,19 +91,30 @@ def apply_vscode(check):
 
     for key, value in VSCODE_SETTINGS.items():
         literal = json.dumps(value)
-        # The file is JSONC, so edit the one key in place rather than reparsing.
-        pattern = re.compile(rf'("{re.escape(key)}"\s*:\s*)([^,\n]+)')
-        found = pattern.search(updated)
+        # The file is JSONC, so edit the one key in place rather than
+        # reparsing. Anchored to line start (with MULTILINE) so a
+        # `// "key": ...` comment line doesn't match; the value alternates a
+        # quoted JSON string - so an internal comma, e.g. a font fallback
+        # list, doesn't truncate the capture - with a bare scalar that stops
+        # before a `}` instead of swallowing one on a comma-less last entry.
+        pattern = re.compile(
+            rf'^(\s*"{re.escape(key)}"\s*:\s*)("(?:[^"\\]|\\.)*"|[^,\n}}]+)',
+            re.MULTILINE)
+        matches = list(pattern.finditer(updated))
+        if len(matches) > 1:
+            say(WARN, "vscode", f"{key}: {len(matches)} matches (language override?) - editing the first")
+        found = matches[0] if matches else None
         if found:
             if found.group(2).strip() == literal:
                 continue
             changes.append(f"{key}: {found.group(2).strip()} -> {literal}")
-            updated = pattern.sub(lambda m: m.group(1) + literal, updated, count=1)
+            updated = updated[:found.start()] + found.group(1) + literal + updated[found.end():]
         else:
             changes.append(f"{key}: (missing) -> {literal}")
             closing = updated.rstrip().rfind("}")
-            updated = (updated[:closing].rstrip().rstrip(",")
-                       + f',\n  "{key}": {literal},\n' + updated[closing:])
+            prefix = updated[:closing].rstrip().rstrip(",")
+            sep = "" if prefix.endswith("{") else ","
+            updated = prefix + f'{sep}\n  "{key}": {literal},\n' + updated[closing:]
 
     if not changes:
         say(OK, "vscode", "already set")
@@ -153,6 +165,24 @@ iterm2.run_until_complete(main)
 '''
 
 
+def warn_if_chezmoi_would_revert(path):
+    """A dotfiles manager tracking the prefs is a second source of truth.
+
+    The API write below lands in the running app and, on exit, on disk - but a
+    later `chezmoi apply` would put the tracked copy back and undo the font.
+    """
+    if not (path.exists() and shutil.which("chezmoi")):
+        return
+    rel = str(path.relative_to(HOME))
+    managed = subprocess.run(["chezmoi", "managed"], capture_output=True, text=True)
+    if rel not in managed.stdout.split("\n"):
+        return
+    status = subprocess.run(["chezmoi", "status", str(path)], capture_output=True, text=True)
+    if status.stdout.strip():
+        say(WARN, "iterm2", f"chezmoi tracks {rel} and its copy differs - run "
+                            f"`chezmoi re-add {path}` or the next `chezmoi apply` reverts this")
+
+
 def apply_iterm(check):
     """Drive the running app over its Python API.
 
@@ -176,6 +206,7 @@ def apply_iterm(check):
         return
     for line in result.stdout.strip().splitlines():
         say(OK, "iterm2", line)
+    warn_if_chezmoi_would_revert(ITERM_PREFS)
 
 
 def apply_orca(check):
