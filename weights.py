@@ -25,6 +25,11 @@ FAMILY = "MenloCJK"
 VERSION = "1.000"
 STEP = 27  # stem units per 100 weight
 
+# 700 carries the RIBBI bold bits so CoreText style linking - which is all
+# iTerm2 has, since it picks fonts by PostScript name and only toggles
+# "Use Bold Font" - finds a real bold instead of smearing one.
+RIBBI_BOLD = 700
+
 # style -> (base face, extra stems above that base, weight, subfamily, italic)
 TARGETS = [
     ("Regular", "Regular", 0, 400, "Regular", False),
@@ -98,8 +103,14 @@ for style, base, steps, weight, subfamily, italic in TARGETS:
     font = TTFont(f"base/{FAMILY}-{base}.ttf")
     skipped = embolden(font, steps * STEP) if steps else []
     font["OS/2"].usWeightClass = weight
-    font["OS/2"].fsSelection = 0x01 if italic else 0x40
-    font["head"].macStyle = 0x02 if italic else 0
+    bold = weight == RIBBI_BOLD
+    font["OS/2"].fsSelection = {
+        (False, False): 0x40,  # REGULAR
+        (False, True): 0x01,  # ITALIC
+        (True, False): 0x20,  # BOLD
+        (True, True): 0x21,  # BOLD | ITALIC
+    }[(bold, italic)]
+    font["head"].macStyle = (0x01 if bold else 0) | (0x02 if italic else 0)
     font["post"].isFixedPitch = 1
     rename(font, style, subfamily, italic)
     font.save(f"out/{FAMILY}-{style}.ttf")
