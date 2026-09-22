@@ -82,6 +82,14 @@ python3 apply.py            # 세 앱 설정까지 한 번에, --check 로 미�
 ### apply.py
 
 세 앱 설정을 코드로 들고 있습니다. **값을 바꾸려면 앱이 아니라 이 파일을 고치세요.**
+인자로 앱을 골라 적용합니다 (없으면 전부):
+
+```sh
+python3 apply.py                 # 전부
+python3 apply.py vscode          # 하나만
+python3 apply.py iterm2 orca     # 일부
+python3 apply.py --check         # 변경 없이 현재 상태만
+```
 
 - VSCode — `settings.json`이 JSONC라 다시 직렬화하지 않고 해당 키만 제자리에서 고칩니다. 없으면 끝에 추가하고, 고치기 전에 타임스탬프 백업을 남깁니다.
 - iTerm2 — 실행 중인 앱을 Python API로 조종합니다. 꺼져 있으면 건너뛰고 안내만 합니다(디스크의 prefs를 고쳐봤자 종료할 때 덮어쓰므로).
@@ -156,6 +164,13 @@ Chromium에는 대응하는 동작이 없어 iTerm2만 가늘어 보입니다. N
   공개 API에 없는 키는 `_simple_get` / `_async_simple_set`으로 직접 다룹니다.
 - Orca: 프로필 데이터 파일을 실행 중에 고치면 몇 초 만에 덮어씁니다. UI에서 설정하거나
   앱을 종료한 뒤 고칩니다.
+
+## Claude Code 스킬
+
+저장소 안에 `.claude/skills/`로 들어 있어 클론만 하면 바로 붙습니다.
+
+- **`menlocjk-build`** — 소스 폰트 확인부터 빌드·설치·검증(스템 그리드, advance, bold 비트)까지
+- **`menlocjk-apply`** — 앱 설정 적용(인자로 앱 선택)과 "한 앱만 다르게 보인다" 진단 체크리스트
 
 ## 라이선스
 

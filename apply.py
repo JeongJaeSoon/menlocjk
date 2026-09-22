@@ -205,22 +205,32 @@ def apply_orca(check):
         say(OK, "orca", f"{path.parent.name}: set {sorted(diff)}")
 
 
+APPS = {"vscode": apply_vscode, "iterm2": apply_iterm, "orca": apply_orca}
+
+
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("apps", nargs="*", metavar="APP",
+                        help=f"any of: {', '.join(APPS)} (default: all)")
     parser.add_argument("--check", action="store_true", help="report without changing anything")
     args = parser.parse_args()
 
     if sys.platform != "darwin":
         sys.exit("macOS only")
 
+    unknown = [a for a in args.apps if a not in APPS]
+    if unknown:
+        parser.error(f"unknown app(s): {', '.join(unknown)} - pick from {', '.join(APPS)}")
+    selected = args.apps or list(APPS)
     check_fonts()
-    apply_vscode(args.check)
-    apply_iterm(args.check)
-    apply_orca(args.check)
+    for app in selected:
+        APPS[app](args.check)
 
-    print("\nRestart Orca afterwards: Chromium caches the font family at launch, "
-          "so new faces are invisible until it restarts (500 falls back to 400, "
-          "600+ to 700).")
+    if "orca" in selected:
+        print("\nRestart Orca afterwards: Chromium caches the font family at launch, "
+              "so new faces are invisible until it restarts (500 falls back to 400, "
+              "600+ to 700).")
 
 
 main()
