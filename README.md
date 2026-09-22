@@ -74,9 +74,27 @@ Italic도 같은 6단계. advance는 건드리지 않으므로 터미널 그리�
 ```sh
 ./build.sh
 cp out/MenloCJK-*.ttf ~/Library/Fonts/
+python3 apply.py            # 세 앱 설정까지 한 번에, --check 로 미리보기
 ```
 
 `prep.py` 상단의 경로 상수와 `weights.py`의 `TARGETS`로 소스 위치·굵기를 조정합니다.
+
+### apply.py
+
+세 앱 설정을 코드로 들고 있습니다. **값을 바꾸려면 앱이 아니라 이 파일을 고치세요.**
+
+- VSCode — `settings.json`이 JSONC라 다시 직렬화하지 않고 해당 키만 제자리에서 고칩니다. 없으면 끝에 추가하고, 고치기 전에 타임스탬프 백업을 남깁니다.
+- iTerm2 — 실행 중인 앱을 Python API로 조종합니다. 꺼져 있으면 건너뛰고 안내만 합니다(디스크의 prefs를 고쳐봤자 종료할 때 덮어쓰므로).
+- Orca — 꺼져 있을 때만 `orca-data.json`을 고칩니다. 켜져 있으면 몇 초 만에 되돌아가므로 거부하고 안내합니다.
+
+```
+$ python3 apply.py --check
+[  ok] fonts: 12 faces installed
+[  ok] vscode: already set
+[  ok] iterm2: Default: already set
+[  ok] iterm2: tmux: already set
+[warn] orca: running - quit it and rerun, or set it by hand in Settings > Terminal
+```
 
 ## 앱 설정
 
