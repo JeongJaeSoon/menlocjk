@@ -34,17 +34,17 @@ If fonts report missing or incomplete, stop and run `menlocjk-build` first.
 
 | App | Font | Size | Weight |
 |---|---|---:|---:|
-| VSCode | `MenloCJK` | 14 | 400 (default) |
-| iTerm2 | `MenloCJK-Regular` | 14 | 400, Thin Strokes **Never** |
-| Orca | `MenloCJK` | 14 | **500**, bold 700 |
+| VSCode | `MenloCJK` | 14 | 400 (default), bold 600 |
+| iTerm2 | `MenloCJK-Regular` | 14 | 400, bold 600, Thin Strokes **Never** |
+| Orca | `MenloCJK` | 14 | **500**, bold **700** |
 
-Orca is deliberately one step heavier. Do not "correct" it to 400.
+Orca is deliberately one step heavier, for body and bold alike. Do not
+"correct" it to 400/600.
 
-Bold is 700 everywhere. Menlo's own drawn Bold sits at 600, and the README
-explains how to point an app's bold weight there instead — but iTerm2 has no
-bold-weight setting at all (CoreText picks the face by the `fsSelection` bold
-bit, which only 700 carries), so 600 cannot be matched across all three. Change
-`ORCA_SETTINGS` in `apply.py` if you want it, or this script puts 700 back.
+Bold is 600 — Menlo's own drawn Bold; 700 is a synthetic step heavier. iTerm2
+picks bold by weight, not by the `fsSelection` bold bit, so `apply.py` lowers
+its app-wide `MinimumWeightDifferenceForBoldFont` from 4 to 3 (why: comment on
+`ITERM_BOLD_KEY`). VSCode's `terminal.integrated.fontWeightBold` is set to match.
 
 ## Why each app is written differently
 
@@ -87,8 +87,11 @@ and any remaining difference is weight or rasterisation — work down this list:
 4. **Korean or Japanese falls back to a proportional system font** — the family
    name is wrong or empty. Check `terminalFontFamily` in Orca and
    `terminal.integrated.fontFamily` in VSCode; both must be exactly `MenloCJK`.
-5. **Bold looks smeared in iTerm2 only** — the 700 faces lost their
-   `fsSelection` BOLD / `macStyle` bits. Rebuild with `menlocjk-build`.
+5. **Bold looks a step too heavy in iTerm2 only** — it is on 700 because
+   `MinimumWeightDifferenceForBoldFont` is back at its default 4. `apply.py
+   iterm2` sets 3; open a new tab or restart iTerm2 after. **Bold looks smeared**
+   instead means the walk found no face heavy enough and iTerm2 double-struck
+   Regular — check that all 12 faces are installed.
 6. **iTerm2 was right and is wrong again on another machine** — a dotfiles
    manager is tracking `~/.config/iterm2/com.googlecode.iterm2.plist` and its
    copy still holds the old fonts. `apply.py iterm2` warns when it sees this;

@@ -25,9 +25,8 @@ FAMILY = "MenloCJK"
 VERSION = "1.000"
 STEP = 27  # stem units per 100 weight
 
-# 700 carries the RIBBI bold bits so CoreText style linking - which is all
-# iTerm2 has, since it picks fonts by PostScript name and only toggles
-# "Use Bold Font" - finds a real bold instead of smearing one.
+# 700 carries the RIBBI bold bits for apps that style-link by them. iTerm2 is
+# not one: it picks bold by AppKit weight (usWeightClass), see apply.py.
 RIBBI_BOLD = 700
 
 # style -> (base face, extra stems above that base, weight, subfamily, italic)
