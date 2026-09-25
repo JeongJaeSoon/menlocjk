@@ -244,7 +244,7 @@ def apply_iterm_bold(check):
         say(WARN, "iterm2", f"would change {ITERM_BOLD_KEY}: {current} -> {ITERM_BOLD_DIFF}")
     else:
         subprocess.run(["defaults", "write", ITERM_DOMAIN, ITERM_BOLD_KEY, "-int", str(ITERM_BOLD_DIFF)], check=True)
-        say(OK, "iterm2", f"set {ITERM_BOLD_KEY}: {current} -> {ITERM_BOLD_DIFF} - new tabs, or restart iTerm2")
+        say(OK, "iterm2", f"set {ITERM_BOLD_KEY}: {current} -> {ITERM_BOLD_DIFF} - restart iTerm2, new windows keep the old bold")
 
 
 def apply_orca(check):

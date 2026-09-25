@@ -89,7 +89,7 @@ and any remaining difference is weight or rasterisation — work down this list:
    `terminal.integrated.fontFamily` in VSCode; both must be exactly `MenloCJK`.
 5. **Bold looks a step too heavy in iTerm2 only** — it is on 700 because
    `MinimumWeightDifferenceForBoldFont` is back at its default 4. `apply.py
-   iterm2` sets 3; open a new tab or restart iTerm2 after. **Bold looks smeared**
+   iterm2` sets 3; restart iTerm2 after — new windows keep the old bold. **Bold looks smeared**
    instead means the walk found no face heavy enough and iTerm2 double-struck
    Regular — check that all 12 faces are installed.
 6. **iTerm2 was right and is wrong again on another machine** — a dotfiles
