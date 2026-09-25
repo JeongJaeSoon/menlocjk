@@ -6,7 +6,8 @@ Run with --check to report the current state without changing anything.
 Orca sits one weight step above the others on purpose: it puts
 `-webkit-font-smoothing: antialiased` on `body`, so macOS Chromium draws the
 same face with grayscale AA and it reads lighter. 500 (stem 199) there lands
-on the same apparent weight as 400 (stem 172) elsewhere.
+on the same apparent weight as 400 (stem 172) elsewhere, and its bold 700 on
+the others' 600.
 """
 import argparse
 import json
@@ -28,6 +29,7 @@ VSCODE_SETTINGS = {
     "terminal.integrated.fontFamily": FAMILY,
     "editor.fontSize": SIZE,
     "terminal.integrated.fontSize": SIZE,
+    "terminal.integrated.fontWeightBold": 600,  # Menlo's drawn Bold, as in iTerm2
 }
 
 ITERM_PROFILE = {
@@ -39,6 +41,13 @@ ITERM_PROFILE = {
     "Use Bold Font": True,
     "Use Italic Font": True,
 }
+
+# App-wide advanced setting, not per profile. iTerm2 finds bold by walking
+# NSFontManager weights up from the regular face until one is at least this
+# much heavier. AppKit maps usWeightClass 400/500/600/700 to 5/6/8/9, so the
+# default 4 lands on the synthetic 700 and 3 on Menlo's drawn Bold at 600.
+ITERM_DOMAIN = "com.googlecode.iterm2"
+ITERM_BOLD_KEY, ITERM_BOLD_DIFF = "MinimumWeightDifferenceForBoldFont", 3
 
 ORCA_SETTINGS = {
     "terminalFontFamily": FAMILY,
@@ -220,7 +229,22 @@ def apply_iterm(check):
         return
     for line in result.stdout.strip().splitlines():
         say(OK, "iterm2", line)
+    apply_iterm_bold(check)
     warn_if_chezmoi_would_revert(ITERM_PREFS)
+
+
+def apply_iterm_bold(check):
+    """Written through `defaults` while the app runs, so it shares the live
+    domain; iTerm2 copies that into the custom prefs folder on exit."""
+    read = subprocess.run(["defaults", "read", ITERM_DOMAIN, ITERM_BOLD_KEY], capture_output=True, text=True)
+    current = read.stdout.strip() if read.returncode == 0 else "(default)"
+    if current == str(ITERM_BOLD_DIFF):
+        say(OK, "iterm2", f"{ITERM_BOLD_KEY}: already set")
+    elif check:
+        say(WARN, "iterm2", f"would change {ITERM_BOLD_KEY}: {current} -> {ITERM_BOLD_DIFF}")
+    else:
+        subprocess.run(["defaults", "write", ITERM_DOMAIN, ITERM_BOLD_KEY, "-int", str(ITERM_BOLD_DIFF)], check=True)
+        say(OK, "iterm2", f"set {ITERM_BOLD_KEY}: {current} -> {ITERM_BOLD_DIFF} - restart iTerm2, new windows keep the old bold")
 
 
 def apply_orca(check):

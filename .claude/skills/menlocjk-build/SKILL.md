@@ -66,8 +66,9 @@ EOF
 ```
 
 Expected: stems 172 / 199 / 227 / 254 / 281 / 308, advances always A=1233 and
-가=2048, and `fsSel=0x0020` on Bold only (0x0040 elsewhere). That bold bit is
-what iTerm2 uses for style linking — `usWeightClass` alone is not enough there.
+가=2048, and `fsSel=0x0020` on Bold only (0x0040 elsewhere). iTerm2 does not
+read that bit — it picks bold by `usWeightClass`, which is why each face's
+weight must be right.
 
 Also check that composites did not get emboldened twice. In the roman faces
 `Aacute` must be exactly as wide as `A`, at every weight:
