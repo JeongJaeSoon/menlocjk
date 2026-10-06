@@ -56,15 +56,17 @@ Italic도 같은 6단계. advance는 건드리지 않으므로 터미널 그리�
 54,587자 중 유니온이 실패하는 1~2자는 원본 아웃라인을 유지합니다.
 
 > **주의:** 700은 더 이상 Menlo가 그린 Bold가 아니라 그보다 굵은 합성입니다. 터미널
-> ANSI 볼드는 기본적으로 700을 쓰므로 볼드가 굵어집니다.
+> 볼드는 기본적으로 700을 쓰므로 그대로 두면 볼드가 한 칸 굵어집니다. 그래서 볼드는
+> **600**(Menlo 원본 Bold)에 맞춥니다 — VSCode는 `terminal.integrated.fontWeightBold`,
+> iTerm2는 아래 advanced setting. Orca만 본문처럼 한 칸 위인 700입니다([앱 설정](#앱-설정)).
 >
-> 기본값은 700입니다 — `apply.py`의 `ORCA_SETTINGS`가 그렇게 넣습니다. Menlo가 그린
-> Bold를 볼드로 쓰고 싶으면 앱의 볼드 웨이트를 600으로 내리세요. Orca는
-> `Bold Font Weight`, VSCode는 `terminal.integrated.fontWeightBold`입니다. 다만
-> **iTerm2에는 볼드 웨이트 설정이 없습니다** — CoreText가 `fsSelection`의 bold 비트로
-> 페이스를 고르고, 그 비트는 700에만 있습니다. 세 앱을 같게 맞추는 게 목적이라면 700에
-> 두는 편이 맞고, 600으로 내리려면 `apply.py`의 `ORCA_SETTINGS`도 같이 고쳐야 합니다
-> (안 그러면 다음 실행 때 조용히 700으로 돌아갑니다).
+> **iTerm2의 볼드는 bold 비트가 아니라 웨이트로 고릅니다.** Regular에서
+> `NSFontManager`로 한 단계씩 무거운 페이스를 찾아 올라가다가, AppKit 웨이트가
+> `MinimumWeightDifferenceForBoldFont`(advanced setting, 기본 4) 이상 차이 나는 첫
+> 페이스를 씁니다. AppKit은 `usWeightClass` 400/500/600/700을 5/6/8/9로 읽으므로
+> 기본값 4면 700, **3이면 600**이 걸립니다. `fsSelection`의 bold 비트를 600으로 옮겨도
+> 결과는 같습니다(실측). 앱 전체 설정이라 SemiBold가 있는 다른 폰트(SF Mono 등)를 쓰는
+> 프로필도 볼드가 SemiBold로 바뀝니다.
 
 ## 빌드
 
@@ -122,11 +124,11 @@ $ python3 apply.py --check
 
 | | 폰트 | 크기 | 웨이트 | 스템 | 볼드 |
 |---|---|---:|---:|---:|---|
-| VSCode | `MenloCJK` | 14 | 기본 (400) | 172 | 기본 (700) |
-| iTerm2 | `MenloCJK-Regular` | 14 | 400 | 172 | 설정 없음 — bold 비트로 700 |
-| Orca | `MenloCJK` | 14 | **500** | **199** | 700 |
+| VSCode | `MenloCJK` | 14 | 기본 (400) | 172 | 600 |
+| iTerm2 | `MenloCJK-Regular` | 14 | 400 | 172 | 600 (advanced setting) |
+| Orca | `MenloCJK` | 14 | **500** | **199** | **700** |
 
-Orca만 500인 이유는 아래 [앱별 함정](#앱별-함정)의 font-smoothing 항목입니다.
+Orca만 본문·볼드 모두 한 칸 위인 이유는 아래 [앱별 함정](#앱별-함정)의 font-smoothing 항목입니다.
 
 **VSCode**
 
@@ -135,6 +137,7 @@ Orca만 500인 이유는 아래 [앱별 함정](#앱별-함정)의 font-smoothin
 "terminal.integrated.fontFamily": "MenloCJK",
 "editor.fontSize": 14,
 "terminal.integrated.fontSize": 14,
+"terminal.integrated.fontWeightBold": 600,
 ```
 
 **iTerm2** — Profiles → Text
@@ -146,11 +149,16 @@ Orca만 500인 이유는 아래 [앱별 함정](#앱별-함정)의 font-smoothin
 - Use bold font: **켜기** — 꺼져 있으면 ANSI 볼드가 안 나옵니다
 - Use italic font: **켜기**
 
+Settings → Advanced (앱 전체)
+
+- Minimum weight difference between regular and bold font: **3** — 기본 4면 볼드가 700
+
 **Orca** — Settings → Terminal
 
 - Font Family: `MenloCJK`
 - Font Size: 14
 - Font Weight: **500**
+- Bold Font Weight: **700**
 
 ## 앱별 함정
 
@@ -161,7 +169,7 @@ Chromium에는 대응하는 동작이 없어 iTerm2만 가늘어 보입니다. N
 `-webkit-font-smoothing: antialiased`를 겁니다(VSCode에는 없음). macOS Chromium에서
 이건 subpixel AA를 grayscale AA로 바꾸는 스위치라 **같은 페이스가 더 얇게** 그려집니다.
 플러그인 매니페스트가 CSS 주입을 지원하지 않아 정공법으로는 못 고칩니다. 대신 웨이트를
-정확히 한 칸(+27) 올려 상쇄합니다 — Orca 500(199) ≒ VSCode 400(172).
+정확히 한 칸(+27) 올려 상쇄합니다 — Orca 500(199) ≒ VSCode 400(172), 볼드도 Orca 700(254) ≒ 600(227).
 
 **새 웨이트 설치 후 Orca 재시작** — Chromium이 시작 시점의 패밀리 구성을 캐싱합니다.
 재시작 전에는 500이 400으로, 600 이상이 700으로 떨어져서 "400과 500이 똑같고 600에서
